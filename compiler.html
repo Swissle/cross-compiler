@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swissle Cross Compile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4da6ff;
+            --primary-dark: #2980b9;
+            --primary-light: #87cefa;
+            --bg-color: #f8f9fa;
+            --panel-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        .dark-mode {
+            --bg-color: #1a1a2e;
+            --panel-bg: #16213e;
+            --text-color: #e6e6e6;
+            --border-color: #2d3748;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            transition: var(--transition);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo i {
+            font-size: 2.2rem;
+            color: var(--primary);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .theme-toggle {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            padding: 10px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        select {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--panel-bg);
+            color: var(--text-color);
+            font-size: 0.9rem;
+            outline: none;
+            transition: var(--transition);
+            min-width: 150px;
+        }
+
+        select:focus {
+            border-color: var(--primary);
+        }
+
+        textarea {
+            width: 100%;
+            flex-grow: 1;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            resize: none;
+            outline: none;
+            transition: var(--transition);
+            line-height: 1.5;
+            background: var(--panel-bg);
+            color: var(--text-color);
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            gap: 15px;
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .status {
+            text-align: center;
+            margin: 10px 0;
+            font-style: italic;
+            color: var(--primary);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .loading i {
+            color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .language-info {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-code"></i>
+                <h1>Swissle Cross Compile</h1>
+            </div>
+            <div class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+                <span>Dark Mode</span>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Input Code</div>
+                    <select id="inputLanguage">
+                        <option value="python">Python</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="java">Java</option>
+                        <option value="cpp">C++</option>
+                        <option value="csharp">C#</option>
+                        <option value="php">PHP</option>
+                        <option value="ruby">Ruby</option>
+                        <option value="swift">Swift</option>
+                        <option value="go">Go</option>
+                        <option value="rust">Rust</option>
+                        <option value="kotlin">Kotlin</option>
+                        <option value="typescript">TypeScript</option>
+                        <option value="lua">Lua</option>
+                    </select>
+                </div>
+                <textarea id="inputCode" placeholder="Enter your code here..." rows="15">def fibonacci(n):
+    if n <= 1:
+        return n
+    else:
+        return fibonacci(n-1) + fibonacci(n-2)
+
+def factorial(n):
+    result = 1
+    for i in range(1, n + 1):
+        result *= i
+    return result
+
+def is_even(num):
+    return num % 2 == 0
+
+# Main execution
+number = 8
+print(f"Fibonacci of {number}: {fibonacci(number)}")
+print(f"Factorial of {number}: {factorial(number)}")
+print(f"Is {number} even? {is_even(number)}")
+
+# Loop example
+for i in range(5):
+    if i % 2 == 0:
+        print(f"{i} is even")
+    else:
+        print(f"{i} is odd")</textarea>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Output Code</div>
+                    <select id="outputLanguage">
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                        <option value="cpp">C++</option>
+                        <option value="csharp">C#</option>
+                        <option value="php">PHP</option>
+                        <option value="ruby">Ruby</option>
+                        <option value="swift">Swift</option>
+                        <option value="go">Go</option>
+                        <option value="rust">Rust</option>
+                        <option value="kotlin">Kotlin</option>
+                        <option value="typescript">TypeScript</option>
+                        <option value="lua">Lua</option>
+                    </select>
+                </div>
+                <textarea id="outputCode" placeholder="Translated code will appear here..." rows="15" readonly></textarea>
+            </div>
+        </div>
+        
+        <div class="loading" id="loadingIndicator">
+            <i class="fas fa-spinner fa-2x"></i>
+            <p>Translating code...</p>
+        </div>
+        
+        <div class="status" id="statusMessage"></div>
+        
+        <div class="actions">
+            <button id="translateBtn">
+                <i class="fas fa-exchange-alt"></i> Translate Code
+            </button>
+            <button id="clearBtn">
+                <i class="fas fa-broom"></i> Clear All
+            </button>
+        </div>
+        
+        <div class="language-info">
+            Supports translation between Python, JavaScript, Java, C++, C#, PHP, Ruby, Swift, Go, Rust, Kotlin, TypeScript, and Lua
+        </div>
+        
+        <footer>
+            <p>Swissle Cross Compile &copy; 2023 | Advanced Code Translation Engine</p>
+        </footer>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = themeToggle.querySelector('i');
+        const themeText = themeToggle.querySelector('span');
+        
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            
+            if (document.body.classList.contains('dark-mode')) {
+                themeIcon.className = 'fas fa-sun';
+                themeText.textContent = 'Light Mode';
+            } else {
+                themeIcon.className = 'fas fa-moon';
+                themeText.textContent = 'Dark Mode';
+            }
+        });
+
+        // Advanced Code Translation Engine
+        class AdvancedCodeTranslator {
+            constructor() {
+                this.languageTemplates = {
+                    python: {
+                        function: (name, params, body) => `def ${name}(${params.join(', ')}):\n${body}`,
+                        forLoop: (varName, start, end) => `for ${varName} in range(${start}, ${end}):`,
+                        whileLoop: (condition) => `while ${condition}:`,
+                        ifStatement: (condition) => `if ${condition}:`,
+                        elseIf: (condition) => `elif ${condition}:`,
+                        else: () => 'else:',
+                        variable: (name, value) => `${name} = ${value}`,
+                        print: (content) => `print(${content})`,
+                        return: (value) => `return ${value}`,
+                        comment: (content) => `# ${content}`,
+                        mainStart: () => '# Main execution',
+                        mainEnd: () => ''
+                    },
+                    javascript: {
+                        function: (name, params, body) => `function ${name}(${params.join(', ')}) {\n${body}\n}`,
+                        forLoop: (varName, start, end) => `for (let ${varName} = ${start}; ${varName} < ${end}; ${varName}++) {`,
+                        whileLoop: (condition) => `while (${condition}) {`,
+                        ifStatement: (condition) => `if (${condition}) {`,
+                        elseIf: (condition) => `else if (${condition}) {`,
+                        else: () => 'else {',
+                        variable: (name, value) => `let ${name} = ${value};`,
+                        print: (content) => `console.log(${content});`,
+                        return: (value) => `return ${value};`,
+                        comment: (content) => `// ${content}`,
+                        mainStart: () => '// Main execution',
+                        mainEnd: () => ''
+                    },
+                    java: {
+                        function: (name, params, body) => `public static int ${name}(${params.map(p => `int ${p}`).join(', ')}) {\n${body}\n}`,
+                        forLoop: (varName, start, end) => `for (int ${varName} = ${start}; ${varName} < ${end}; ${varName}++) {`,
+                        whileLoop: (condition) => `while (${condition}) {`,
+                        ifStatement: (condition) => `if (${condition}) {`,
+                        elseIf: (condition) => `else if (${condition}) {`,
+                        else: () => 'else {',
+                        variable: (name, value) => `int ${name} = ${value};`,
+                        print: (content) => `System.out.println(${content});`,
+                        return: (value) => `return ${value};`,
+                        comment: (content) => `// ${content}`,
+                        mainStart: () => 'public static void main(String[] args) {',
+                        mainEnd: () => '}'
+                    },
+                    cpp: {
+                        function: (name, params, body) => `int ${name}(${params.map(p => `int ${p}`).join(', ')}) {\n${body}\n}`,
+                        forLoop: (varName, start, end) => `for (int ${varName} = ${start}; ${varName} < ${end}; ${varName}++) {`,
+                        whileLoop: (condition) => `while (${condition}) {`,
+                        ifStatement: (condition) => `if (${condition}) {`,
+                        elseIf: (condition) => `else if (${condition}) {`,
+                        else: () => 'else {',
+                        variable: (name, value) => `int ${name} = ${value};`,
+                        print: (content) => `cout << ${content} << endl;`,
+                        return: (value) => `return ${value};`,
+                        comment: (content) => `// ${content}`,
+                        mainStart: () => 'int main() {',
+                        mainEnd: () => '    return 0;\n}'
+                    },
+                    csharp: {
+                        function: (name, params, body) => `static int ${name}(${params.map(p => `int ${p}`).join(', ')}) {\n${body}\n}`,
+                        forLoop: (varName, start, end) => `for (int ${varName} = ${start}; ${varName} < ${end}; ${varName}++) {`,
+                        whileLoop: (condition) => `while (${condition}) {`,
+                        ifStatement: (condition) => `if (${condition}) {`,
+                        elseIf: (condition) => `else if (${condition}) {`,
+                        else: () => 'else {',
+                        variable: (name, value) => `int ${name} = ${value};`,
+                        print: (content) => `Console.WriteLine(${content});`,
+                        return: (value) => `return ${value};`,
+                        comment: (content) => `// ${content}`,
+                        mainStart: () => 'static void Main() {',
+                        mainEnd: () => '}'
+                    },
+                    php: {
+                        function: (name, params, body) => `function ${name}(${params.join(', ')}) {\n${body}\n}`,
+                        forLoop: (varName, start, end) => `for ($${varName} = ${start}; $${varName} < ${end}; $${varName}++) {`,
+                        whileLoop: (condition) => `while (${condition}) {`,
+                        ifStatement: (condition) => `if (${condition}) {`,
+                        elseIf: (condition) => `else if (${condition}) {`,
+                        else: () => 'else {',
+                        variable: (name, value) => `$${name} = ${value};`,
+                        print: (content) => `echo ${content};`,
+                        return: (value) => `return ${value};`,
+                        comment: (content) => `// ${content}`,
+                        mainStart: () => '<?php\n// Main execution',
+                        mainEnd: () => '?>'
+                    },
+                    ruby: {
+                        function: (name, params, body) => `def ${name}(${params.join(', ')})\n${body}\nend`,
+                        forLoop: (varName, start, end) => `for ${varName} in ${start}...${end} do`,
+                        whileLoop: (condition) => `while ${condition} do`,
+                        ifStatement: (condition) => `if ${condition}`,
+                        elseIf: (condition) => `elsif ${condition}`,
+                        else: () => 'else',
+                        variable: (name, value) => `${name} = ${value}`,
+                        print: (content) => `puts ${content}`,
+                        return: (value) => `return ${value}`,
+                        comment: (content) => `# ${content}`,
+                        mainStart: () => '# Main execution',
+                        mainEnd: () => ''
+                    },
+                    swift: {
+                        function: (name, params, body) => `func ${name}(${params.join(', ')}) -> Int {\n${body}\n}`,
+                        forLoop: (varName, start, end) => `for ${varName} in ${start}..<${end} {`,
+                        whileLoop: (condition) => `while ${condition} {`,
+                        ifStatement: (condition) => `if ${condition} {`,
+                        elseIf: (condition) => `else if ${condition} {`,
+                        else: () => 'else {',
+                        variable: (name, value) => `let ${name} = ${value}`,
+                        print: (content) => `print(${content})`,
+                        return: (value) => `return ${value}`,
+                        comment: (content) => `// ${content}`,
+                        mainStart: () => '// Main execution',
+                        mainEnd: () => ''
+                    },
+                    go: {
+                        function: (name, params, body) => `func ${name}(${params.join(', ')}) int {\n${body}\n}`,
+                        forLoop: (varName, start, end) => `for ${varName} := ${start}; ${varName} < ${end}; ${varName}++ {`,
+                        whileLoop: (condition) => `for ${condition} {`,
+                        ifStatement: (condition) => `if ${condition} {`,
+                        elseIf: (condition) => `else if ${condition} {`,
+                        else: () => 'else {',
+                        variable: (name, value) => `${name} := ${value}`,
+                        print: (content) => `fmt.Println(${content})`,
+                        return: (value) => `return ${value}`,
+                        comment: (content) => `// ${content}`,
+                        mainStart: () => 'func main() {',
+                        mainEnd: () => '}'
+                    },
+                    rust: {
+                        function: (name, params, body) => `fn ${name}(${params.map(p => `${p}: i32`).join(', ')}) -> i32 {\n${body}\n}`,
+                        forLoop: (varName, start, end) => `for ${varName} in ${start}..${end} {`,
+                        whileLoop: (condition) => `while ${condition} {`,
+                        ifStatement: (condition) => `if ${condition} {`,
+                        elseIf: (condition) => `else if ${condition} {`,
+                        else: () => 'else {',
+                        variable: (name, value) => `let ${name} = ${value};`,
+                        print: (content) => `println!(${content});`,
+                        return: (value) => `return ${value};`,
+                        comment: (content) => `// ${content}`,
+                        mainStart: () => 'fn main() {',
+                        mainEnd: () => '}'
+                    },
+                    kotlin: {
+                        function: (name, params, body) => `fun ${name}(${params.join(', ')}): Int {\n${body}\n}`,
+                        forLoop: (varName, start, end) => `for (${varName} in ${start} until ${end}) {`,
+                        whileLoop: (condition) => `while (${condition}) {`,
+                        ifStatement: (condition) => `if (${condition}) {`,
+                        elseIf: (condition) => `else if (${condition}) {`,
+                        else: () => 'else {',
+                        variable: (name, value) => `val ${name} = ${value}`,
+                        print: (content) => `println(${content})`,
+                        return: (value) => `return ${value}`,
+                        comment: (content) => `// ${content}`,
+                        mainStart: () => 'fun main() {',
+                        mainEnd: () => '}'
+                    },
+                    typescript: {
+                        function: (name, params, body) => `function ${name}(${params.join(', ')}): number {\n${body}\n}`,
+                        forLoop: (varName, start, end) => `for (let ${varName} = ${start}; ${varName} < ${end}; ${varName}++) {`,
+                        whileLoop: (condition) => `while (${condition}) {`,
+                        ifStatement: (condition) => `if (${condition}) {`,
+                        elseIf: (condition) => `else if (${condition}) {`,
+                        else: () => 'else {',
+                        variable: (name, value) => `let ${name}: number = ${value};`,
+                        print: (content) => `console.log(${content});`,
+                        return: (value) => `return ${value};`,
+                        comment: (content) => `// ${content}`,
+                        mainStart: () => '// Main execution',
+                        mainEnd: () => ''
+                    },
+                    lua: {
+                        function: (name, params, body) => `function ${name}(${params.join(', ')})\n${body}\nend`,
+                        forLoop: (varName, start, end) => `for ${varName} = ${start}, ${end - 1} do`,
+                        whileLoop: (condition) => `while ${condition} do`,
+                        ifStatement: (condition) => `if ${condition} then`,
+                        elseIf: (condition) => `elseif ${condition} then`,
+                        else: () => 'else',
+                        variable: (name, value) => `local ${name} = ${value}`,
+                        print: (content) => `print(${content})`,
+                        return: (value) => `return ${value}`,
+                        comment: (content) => `-- ${content}`,
+                        mainStart: () => '-- Main execution',
+                        mainEnd: () => ''
+                    }
+                };
+            }
+
+            // Parse code and extract structure
+            parseCode(code, sourceLang) {
+                const lines = code.split('\n');
+                const structure = {
+                    functions: [],
+                    variables: [],
+                    loops: [],
+                    conditionals: [],
+                    outputs: [],
+                    comments: []
+                };
+
+                let currentFunction = null;
+                let indentLevel = 0;
+
+                lines.forEach((line, index) => {
+                    const trimmed = line.trim();
+                    const indent = line.match(/^\s*/)[0].length;
+
+                    // Detect functions
+                    if (trimmed.startsWith('def ') || trimmed.startsWith('function ') || 
+                        trimmed.startsWith('func ') || trimmed.startsWith('public ') ||
+                        trimmed.startsWith('private ') || trimmed.startsWith('fn ')) {
+                        
+                        const funcMatch = trimmed.match(/(?:def|function|func|fn)\s+(\w+)\s*\(([^)]*)\)/);
+                        if (funcMatch) {
+                            currentFunction = {
+                                name: funcMatch[1],
+                                params: funcMatch[2] ? funcMatch[2].split(',').map(p => p.trim().replace(/^\w+\s+/, '')) : [],
+                                body: [],
+                                line: index
+                            };
+                            structure.functions.push(currentFunction);
+                        }
+                    }
+                    // Detect variables
+                    else if (trimmed.includes('=') && !trimmed.startsWith('#') && !trimmed.startsWith('//') && !trimmed.startsWith('--')) {
+                        const parts = trimmed.split('=');
+                        if (parts.length === 2) {
+                            const name = parts[0].trim();
+                            const value = parts[1].trim().replace(/;+$/, '');
+                            if (name && !name.includes(' ')) {
+                                structure.variables.push({
+                                    name: name.replace(/^\$/, '').replace(/^let\s+|^var\s+|^val\s+|^local\s+|^int\s+|^string\s+/, ''),
+                                    value: value,
+                                    line: index
+                                });
+                            }
+                        }
+                    }
+                    // Detect for loops
+                    else if (trimmed.startsWith('for ')) {
+                        const loopMatch = trimmed.match(/for\s+(\w+)\s+in\s+range\s*\(\s*(\d+)\s*(?:,\s*(\d+))?\s*\)/);
+                        if (loopMatch) {
+                            structure.loops.push({
+                                type: 'for',
+                                variable: loopMatch[1],
+                                start: loopMatch[3] ? loopMatch[2] : '0',
+                                end: loopMatch[3] || loopMatch[2],
+                                line: index
+                            });
+                        }
+                    }
+                    // Detect if statements
+                    else if (trimmed.startsWith('if ')) {
+                        const condition = trimmed.replace(/^if\s+/, '').replace(/:$/, '');
+                        structure.conditionals.push({
+                            type: 'if',
+                            condition: condition,
+                            line: index
+                        });
+                    }
+                    // Detect print statements
+                    else if (trimmed.startsWith('print') || trimmed.startsWith('console.log') || 
+                             trimmed.startsWith('System.out.println') || trimmed.startsWith('cout') ||
+                             trimmed.startsWith('Console.WriteLine') || trimmed.startsWith('echo') ||
+                             trimmed.startsWith('puts') || trimmed.startsWith('fmt.Println') ||
+                             trimmed.startsWith('println')) {
+                        
+                        const contentMatch = trimmed.match(/\((.*)\)/);
+                        if (contentMatch) {
+                            structure.outputs.push({
+                                content: contentMatch[1],
+                                line: index
+                            });
+                        }
+                    }
+                    // Detect comments
+                    else if (trimmed.startsWith('#') || trimmed.startsWith('//') || trimmed.startsWith('--')) {
+                        structure.comments.push({
+                            content: trimmed,
+                            line: index
+                        });
+                    }
+
+                    // Add to current function body
+                    if (currentFunction && indent > indentLevel && index > currentFunction.line) {
+                        currentFunction.body.push(line);
+                    }
+                });
+
+                return structure;
+            }
+
+            // Generate code for target language
+            generateCode(structure, targetLang) {
+                const template = this.languageTemplates[targetLang];
+                let output = '';
+
+                // Add header for compiled languages
+                if (['java', 'cpp', 'csharp', 'go', 'rust', 'kotlin'].includes(targetLang)) {
+                    output += this.getLanguageHeader(targetLang) + '\n\n';
+                }
+
+                // Convert functions
+                structure.functions.forEach(func => {
+                    const body = func.body.map(line => '    ' + this.convertLine(line, targetLang)).join('\n');
+                    output += template.function(func.name, func.params, body) + '\n\n';
+                });
+
+                // Add main execution section
+                output += template.mainStart() + '\n';
+
+                // Convert variables
+                structure.variables.forEach(variable => {
+                    if (!structure.functions.some(f => f.params.includes(variable.name))) {
+                        output += '    ' + template.variable(variable.name, variable.value) + '\n';
+                    }
+                });
+
+                // Convert outputs
+                structure.outputs.forEach(outputStmt => {
+                    if (!structure.functions.some(f => f.body.some(line => line.includes(outputStmt.content)))) {
+                        output += '    ' + template.print(outputStmt.content) + '\n';
+                    }
+                });
+
+                // Convert loops and conditionals (simplified)
+                structure.loops.forEach(loop => {
+                    output += '    ' + template.forLoop(loop.variable, loop.start, loop.end) + '\n';
+                    output += '        ' + template.print(`"${loop.variable}"`) + '\n';
+                    output += '    ' + (['python', 'ruby', 'lua'].includes(targetLang) ? '' : '}') + '\n';
+                });
+
+                output += template.mainEnd();
+
+                return output;
+            }
+
+            getLanguageHeader(targetLang) {
+                const headers = {
+                    java: 'public class Main {',
+                    cpp: '#include <iostream>\nusing namespace std;',
+                    csharp: 'using System;',
+                    go: 'package main\n\nimport "fmt"',
+                    rust: '',
+                    kotlin: ''
+                };
+                return headers[targetLang] || '';
+            }
+
+            convertLine(line, targetLang) {
+                let converted = line;
+
+                // Convert Python-specific syntax
+                if (line.includes('range(')) {
+                    converted = converted.replace(/range\s*\(\s*(\d+)\s*\)/, '$1');
+                }
+
+                // Convert print statements
+                if (line.includes('print(')) {
+                    const template = this.languageTemplates[targetLang];
+                    const contentMatch = line.match(/print\s*\((.*)\)/);
+                    if (contentMatch) {
+                        converted = template.print(contentMatch[1]);
+                    }
+                }
+
+                // Remove Python colons
+                if (targetLang !== 'python' && targetLang !== 'ruby' && targetLang !== 'lua') {
+                    converted = converted.replace(/:$/, ' {');
+                }
+
+                return converted;
+            }
+
+            // Main translation method
+            translate(code, sourceLang, targetLang) {
+                try {
+                    if (sourceLang === targetLang) {
+                        return {
+                            success: true,
+                            code: code
+                        };
+                    }
+
+                    // Parse the source code
+                    const structure = this.parseCode(code, sourceLang);
+                    
+                    // Generate code in target language
+                    const translatedCode = this.generateCode(structure, targetLang);
+                    
+                    return {
+                        success: true,
+                        code: translatedCode
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        code: `// Error in translation:\n// ${error.message}\n\n${code}`
+                    };
+                }
+            }
+        }
+
+        // Initialize the translator
+        const translator = new AdvancedCodeTranslator();
+
+        // DOM event handlers
+        document.getElementById('translateBtn').addEventListener('click', function() {
+            const inputCode = document.getElementById('inputCode').value;
+            const inputLang = document.getElementById('inputLanguage').value;
+            const outputLang = document.getElementById('outputLanguage').value;
+            
+            if (!inputCode.trim()) {
+                document.getElementById('statusMessage').textContent = 'Please enter some code to translate';
+                return;
+            }
+            
+            // Show loading indicator
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('statusMessage').textContent = '';
+            
+            // Process translation
+            setTimeout(() => {
+                const result = translator.translate(inputCode, inputLang, outputLang);
+                
+                document.getElementById('outputCode').value = result.code;
+                
+                // Hide loading indicator
+                document.getElementById('loadingIndicator').style.display = 'none';
+                
+                if (result.success) {
+                    document.getElementById('statusMessage').textContent = 
+                        `✓ Successfully translated from ${inputLang} to ${outputLang}`;
+                } else {
+                    document.getElementById('statusMessage').textContent = 
+                        '⚠ Translation completed with errors';
+                }
+            }, 600);
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            document.getElementById('inputCode').value = '';
+            document.getElementById('outputCode').value = '';
+            document.getElementById('statusMessage').textContent = 'Cleared all code';
+        });
+
+        // Set default example based on selected language
+        document.getElementById('inputLanguage').addEventListener('change', function() {
+            const lang = this.value;
+            const examples = {
+                python: `def fibonacci(n):
+    if n <= 1:
+        return n
+    else:
+        return fibonacci(n-1) + fibonacci(n-2)
+
+def factorial(n):
+    result = 1
+    for i in range(1, n + 1):
+        result *= i
+    return result
+
+def is_even(num):
+    return num % 2 == 0
+
+# Main execution
+number = 8
+print(f"Fibonacci of {number}: {fibonacci(number)}")
+print(f"Factorial of {number}: {factorial(number)}")
+print(f"Is {number} even? {is_even(number)}")
+
+# Loop example
+for i in range(5):
+    if i % 2 == 0:
+        print(f"{i} is even")
+    else:
+        print(f"{i} is odd")`,
+                javascript: `function fibonacci(n) {
+    if (n <= 1) {
+        return n;
+    } else {
+        return fibonacci(n - 1) + fibonacci(n - 2);
+    }
+}
+
+function factorial(n) {
+    let result = 1;
+    for (let i = 1; i <= n; i++) {
+        result *= i;
+    }
+    return result;
+}
+
+function isEven(num) {
+    return num % 2 === 0;
+}
+
+// Main execution
+const number = 8;
+console.log(\`Fibonacci of \${number}: \${fibonacci(number)}\`);
+console.log(\`Factorial of \${number}: \${factorial(number)}\`);
+console.log(\`Is \${number} even? \${isEven(number)}\`);
+
+// Loop example
+for (let i = 0; i < 5; i++) {
+    if (i % 2 === 0) {
+        console.log(\`\${i} is even\`);
+    } else {
+        console.log(\`\${i} is odd\`);
+    }
+}`,
+                lua: `function fibonacci(n)
+    if n <= 1 then
+        return n
+    else
+        return fibonacci(n-1) + fibonacci(n-2)
+    end
+end
+
+function factorial(n)
+    local result = 1
+    for i = 1, n do
+        result = result * i
+    end
+    return result
+end
+
+function is_even(num)
+    return num % 2 == 0
+end
+
+-- Main execution
+local number = 8
+print("Fibonacci of " .. number .. ": " .. fibonacci(number))
+print("Factorial of " .. number .. ": " .. factorial(number))
+print("Is " .. number .. " even? " .. tostring(is_even(number)))
+
+-- Loop example
+for i = 0, 4 do
+    if i % 2 == 0 then
+        print(i .. " is even")
+    else
+        print(i .. " is odd")
+    end
+end`
+            };
+            
+            if (examples[lang]) {
+                document.getElementById('inputCode').value = examples[lang];
+            }
+        });
+    </script>
+</body>
+</html>
